@@ -74,3 +74,10 @@ if (canvas.parentElement) {
   new ResizeObserver(() => scheduleRender()).observe(canvas.parentElement);
 }
 window.addEventListener('resize', () => scheduleRender());
+
+// Safety net: repaint whenever any font finishes loading, in case glyphs become
+// available just after our explicit load resolved (or timed out).
+document.fonts.addEventListener('loadingdone', () => {
+  state.fontReady = true;
+  scheduleRender();
+});

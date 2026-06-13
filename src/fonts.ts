@@ -149,10 +149,23 @@ export async function fetchFullCatalog(): Promise<boolean> {
 
 // --- CSS loading -----------------------------------------------------------
 
-const loadedKeys = new Set<string>();
+const loadedKeys = new Set<string>(); // variants we've injected a stylesheet for
+const readyKeys = new Set<string>(); // variants confirmed to have loaded glyphs
 
 function variantKey(family: string, weight: number, italic: boolean): string {
   return `${family}|${weight}|${italic ? 'i' : 'n'}`;
+}
+
+/**
+ * Whether a real (loaded) @font-face exists for this family. We can't rely on
+ * document.fonts.check(): it returns true even when NO face matches the family
+ * (it assumes a system fallback), which would make us skip loading entirely.
+ */
+function faceLoaded(family: string): boolean {
+  for (const f of document.fonts) {
+    if (f.family.replace(/^['"]|['"]$/g, '') === family && f.status === 'loaded') return true;
+  }
+  return false;
 }
 
 function cssUrl(family: string, weight: number, italic: boolean): string {
@@ -161,31 +174,50 @@ function cssUrl(family: string, weight: number, italic: boolean): string {
   return `https://fonts.googleapis.com/css2?family=${fam}:${axis}&display=swap`;
 }
 
+function timeout(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Inject a stylesheet and resolve once it has actually loaded (or failed). We
+ * must wait for the stylesheet to parse before calling document.fonts.load —
+ * otherwise the @font-face rule isn't registered yet, load() matches nothing,
+ * and we'd paint the fallback even though the font arrives moments later.
+ */
+function injectStylesheet(href: string): Promise<void> {
+  return new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.addEventListener('load', () => resolve());
+    link.addEventListener('error', () => resolve());
+    document.head.appendChild(link);
+    void timeout(5000).then(resolve); // never hang on a slow CDN
+  });
+}
+
 /**
  * Ensure a specific family/weight/style is loaded and ready to paint.
  * Resolves true once the glyphs are available (or false on failure/timeout).
  */
 export async function loadFont(family: string, weight: number, italic: boolean): Promise<boolean> {
   const key = variantKey(family, weight, italic);
+  if (readyKeys.has(key)) return true;
+
   if (!loadedKeys.has(key)) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = cssUrl(family, weight, italic);
-    document.head.appendChild(link);
     loadedKeys.add(key);
+    await injectStylesheet(cssUrl(family, weight, italic));
   }
 
   const spec = `${italic ? 'italic ' : ''}${weight} 64px "${family}"`;
   try {
-    await Promise.race([
-      (async () => {
-        await document.fonts.load(spec);
-        await document.fonts.ready;
-      })(),
-      new Promise<void>((resolve) => setTimeout(resolve, 4000)),
-    ]);
-    return document.fonts.check(spec);
+    // The @font-face rule is registered now; this loads the actual glyphs.
+    await Promise.race([document.fonts.load(spec).then(() => {}), timeout(4000)]);
   } catch {
-    return false;
+    /* fall through to the face check below */
   }
+
+  const ok = faceLoaded(family);
+  if (ok) readyKeys.add(key);
+  return ok;
 }
