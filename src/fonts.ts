@@ -87,8 +87,8 @@ function mergeCatalog(entries: FontEntry[]): void {
 }
 
 /**
- * Pull the full Google Fonts catalogue (≈1500 families with accurate variants)
- * from the public google-webfonts-helper API. Cached in localStorage. Falls
+ * Pull the full Google Fonts catalogue (≈1900 families with accurate variants)
+ * from a CORS-enabled static mirror on jsDelivr. Cached in localStorage. Falls
  * back silently to the curated list when offline — browsing still works.
  */
 export async function fetchFullCatalog(): Promise<boolean> {
@@ -106,7 +106,10 @@ export async function fetchFullCatalog(): Promise<boolean> {
   }
 
   try {
-    const res = await fetch('https://gwfh.mranftl.com/api/fonts');
+    // A static mirror of the Google Fonts Developer API response, served from
+    // jsDelivr with permissive CORS (the gwfh.mranftl.com API sends no CORS
+    // headers, so the browser blocks it). ~465 KB; we keep only what we need.
+    const res = await fetch('https://cdn.jsdelivr.net/npm/google-font-metadata@6/data/api-response.json');
     if (!res.ok) return false;
     const raw = (await res.json()) as Array<{
       family: string;
