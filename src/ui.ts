@@ -19,10 +19,24 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function field(label: string, control: El, hint?: string): El {
-  const children: (Node | string)[] = [el('span', { class: 'field-label' }, [label]), control];
+function field(label: string | El, control: El, hint?: string): El {
+  const labelEl = typeof label === 'string' ? el('span', { class: 'field-label' }, [label]) : label;
+  const children: (Node | string)[] = [labelEl, control];
   if (hint) children.push(el('span', { class: 'field-hint' }, [hint]));
   return el('label', { class: 'field' }, children);
+}
+
+// "Font  (from Google Fonts)" with the source linked out.
+function fontLabel(): El {
+  const link = el('a', {
+    class: 'field-link',
+    href: 'https://fonts.google.com',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  }, ['Google Fonts']);
+  // The label wraps the font button; keep clicking the link from also opening it.
+  link.addEventListener('click', (e) => e.stopPropagation());
+  return el('span', { class: 'field-label' }, ['Font ', el('span', { class: 'field-note' }, ['(from ', link, ')'])]);
 }
 
 export interface AppHandlers {
@@ -154,7 +168,7 @@ function buildControls(root: El): (s: Settings) => void {
   root.append(
     section('Text', [
       field('Text (one line per row)', textArea),
-      field('Font', fontBtn),
+      field(fontLabel(), fontBtn),
       el('div', { class: 'row' }, [field('Weight', weightSel), italicLabel]),
       el('div', { class: 'row' }, [field('Size', sizeInput), field('Unit', unitSel), field('Color', textColor)]),
       field('Line spacing (×)', lineHeight, 'Spacing between lines, as a multiple of size'),
