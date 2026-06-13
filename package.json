@@ -1,0 +1,19 @@
+{
+  "name": "centertext",
+  "version": "1.0.0",
+  "description": "Single-page webapp to center large text on a surface and produce a dimensionally-accurate printable PDF",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vite-plugin-singlefile": "^2.0.2"
+  }
+}
