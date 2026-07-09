@@ -7,6 +7,16 @@ import type { FontEntry } from './types';
 const W_FULL = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 export const CURATED: FontEntry[] = [
+  // Web safe fonts
+  { family: 'Arial', category: 'sans-serif', weights: W_FULL, italics: true },
+  { family: 'Helvetica', category: 'sans-serif', weights: W_FULL, italics: true },
+  { family: 'Verdana', category: 'sans-serif', weights: W_FULL, italics: true },
+  { family: 'Tahoma', category: 'sans-serif', weights: W_FULL, italics: true },
+  { family: 'Trebuchet MS', category: 'sans-serif', weights: W_FULL, italics: true },
+  { family: 'Times New Roman', category: 'serif', weights: W_FULL, italics: true },
+  { family: 'Georgia', category: 'serif', weights: W_FULL, italics: true },
+  { family: 'Garamond', category: 'serif', weights: W_FULL, italics: true },
+  { family: 'Courier New', category: 'monospace', weights: W_FULL, italics: true },
   // Handwriting / script
   { family: 'Dancing Script', category: 'handwriting', weights: [400, 500, 600, 700], italics: false },
   { family: 'Great Vibes', category: 'handwriting', weights: [400], italics: false },
